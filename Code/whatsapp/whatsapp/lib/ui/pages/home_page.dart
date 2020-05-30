@@ -1,51 +1,147 @@
 import 'package:flutter/material.dart';
+import 'package:whatsapp/ui/constants.dart';
+import 'package:whatsapp/ui/pages/chat_page.dart';
+import 'package:whatsapp/ui/pages/status_page.dart';
+
+import 'call_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
+  TabController tabController;
+  var fabIcon = Icons.message;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    // Inicializar variables, llamar WS, etc.
+    super.initState();
+
+    tabController = TabController(vsync: this, length: 4);
+    tabController.index = 1;
+    tabController.animation
+      ..addListener(() {
+        setState(() {
+          _currentIndex = (tabController.animation.value).round();
+          switch (_currentIndex) {
+            case 0:
+              break;
+            case 1:
+              fabIcon = Icons.message;
+              break;
+            case 2:
+              fabIcon = Icons.camera_enhance;
+              break;
+            case 3:
+              fabIcon = Icons.call;
+              break;
+          }
+        });
+      });
+  }
+
+  @override
+  void dispose() {
+    // Para cerrar procesos, llamados, etc.
+    super.dispose();
+    tabController?.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text("WhatsApp"),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.search),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: Icon(Icons.more_vert),
-              onPressed: () {},
-            ),
-          ],
-          bottom: TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.camera_alt)),
-              Tab(
-                text: "CHAT",
-              ),
-              Tab(
-                text: "STATUS",
-              ),
-              Tab(text: "CALLS"),
-            ],
+    double deviceWidth = MediaQuery.of(context).size.width;
+    double othersWidth =
+        (deviceWidth - (Constants.kCameraButtonWidth + (32 * 4))) / 3;
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0.0,
+        title: Text('WhatsApp'),
+        actions: <Widget>[
+          IconButton(
+            onPressed: () {},
+            padding: const EdgeInsets.all(0.0),
+            icon: Icon(Icons.search),
           ),
-        ),
-        body: TabBarView(
-          children: [
-            Icon(Icons.directions_car),
-            Icon(Icons.directions_transit),
-            Icon(Icons.directions_bike),
-            Icon(Icons.directions_bike),
+          PopupMenuButton<String>(
+            itemBuilder: (BuildContext context) {
+              return Constants.choices.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          )
+        ],
+        bottom: TabBar(
+          isScrollable: true,
+          controller: tabController,
+          tabs: <Widget>[
+            Tab(
+              child: Container(
+                width: Constants.kCameraButtonWidth,
+                height: Constants.kBottomTabBarHeight,
+                alignment: Alignment.center,
+                child: Icon(Icons.camera_alt),
+              ),
+            ),
+            _TabItemWithText(
+              width: othersWidth,
+              text: "CHATS",
+            ),
+            _TabItemWithText(
+              width: othersWidth,
+              text: "STATUS",
+            ),
+            _TabItemWithText(
+              width: othersWidth,
+              text: "CALLS",
+            )
           ],
         ),
-        floatingActionButton:
-            FloatingActionButton(child: Icon(Icons.message), onPressed: () {}),
+      ),
+      body: TabBarView(
+        controller: tabController,
+        children: [
+          Icon(Icons.add),
+          ChatPage(),
+          StatusPage(),
+          CallPage(),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        child: Icon(fabIcon),
+      ),
+    );
+  }
+}
+
+class _TabItemWithText extends StatelessWidget {
+  final String text;
+  final double width;
+
+  _TabItemWithText({
+    this.text,
+    this.width,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: Constants.kBottomTabBarHeight,
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        style: TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 15.0,
+        ),
       ),
     );
   }
